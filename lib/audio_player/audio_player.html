@@ -1,0 +1,203 @@
+<style>
+    .highlight {
+        background: lightyellow;
+    }
+
+    .pointer {
+       cursor: pointer;
+    }
+
+    #timeline {
+        width: 40vw;
+        height: 20px;
+        background: gray;
+        margin-top: 20px;
+        border-radius: 15px;
+    }
+
+    @media screen and (max-width: 657px) {
+        #timeline {
+            width: 65vw;
+        }
+    }
+
+    #playhead {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        margin-top: 1px;
+        background: black;
+    }
+
+    .time {
+        margin: 20px 20px 0px 20px;
+    }
+
+    .horizonal-layout {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+    .loading {
+        position: static;
+        top: 45%;
+        width: 100%;
+        z-index: 200000;
+    }
+    .volume {
+        transform: rotate(270deg);
+        -moz-transform: rotate(270deg);
+        position: fixed;
+        z-index: 1000;
+        width: 100px;
+        height: 50px;
+        padding-bottom: 6px;
+        border-radius: 5px;
+        box-shadow: -1px 1px 1px 1px grey;
+    }
+
+    input[type=range] {
+        /*removes default webkit styles*/
+        -webkit-appearance: none;
+
+        /*fix for FF unable to apply focus style bug */
+        border: 1px solid white;
+
+        /*required for proper track sizing in FF*/
+        /*width: 175px;*/
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100px;
+        height: 7px;
+        background: #ddd;
+        border: none;
+        border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        border: none;
+        height: 16px;
+        width: 10px;
+        border-radius: 3px;
+        background: goldenrod;
+        margin-top: -4px;
+    }
+    input[type=range]:focus {
+        outline: none;
+    }
+    input[type=range]:focus::-webkit-slider-runnable-track {
+        background: #ccc;
+    }
+
+    input[type=range]::-moz-range-track {
+        width: 100px;
+        height: 7px;
+        background: #ddd;
+        border: none;
+        border-radius: 3px;
+    }
+    input[type=range]::-moz-range-thumb {
+        border: none;
+        height: 16px;
+        width: 10px;
+        border-radius: 3px;
+        background: goldenrod;
+    }
+
+    /*hide the outline behind the border*/
+    input[type=range]:-moz-focusring{
+        outline: 1px solid white;
+        outline-offset: -1px;
+    }
+
+    input[type=range]::-ms-track {
+        width: 100px;
+        height: 7px;
+
+        /*remove bg colour from the track, we'll use ms-fill-lower and ms-fill-upper instead */
+        background: transparent;
+
+        /*leave room for the larger thumb to overflow with a transparent border */
+        border-color: transparent;
+        border-width: 6px 0;
+
+        /*remove default tick marks*/
+        color: transparent;
+    }
+    input[type=range]::-ms-fill-lower {
+        background: #777;
+        border-radius: 10px;
+    }
+    input[type=range]::-ms-fill-upper {
+        background: #ddd;
+        border-radius: 10px;
+    }
+    input[type=range]::-ms-thumb {
+        border: none;
+        height: 16px;
+        width: 10px;
+        border-radius: 3px;
+        background: goldenrod;
+    }
+    input[type=range]:focus::-ms-fill-lower {
+        background: #888;
+    }
+    input[type=range]:focus::-ms-fill-upper {
+        background: #ccc;
+    }
+
+</style>
+
+<h1 class="text-center">{{ title }}</h1>
+<div class="container" style="background-color: white; padding: 10px;">
+    <div [ngStyle]="{'height': playerHeight}" style="overflow: auto; border: 1px solid black;" id="player-window">
+        <table class="table">
+            <tr>
+                <th>Song</th>
+                <th>Artist</th>
+            </tr>
+            <tr *ngFor="#song of songList; #i = index" [class.highlight]="song.selected" class="pointer" id="song{{i}}" tabindex="0">
+                <td (click)="playSelectedSong(i)">{{ i + 1 }}. {{ song.name }}</td><td>{{artist}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="loading layout horizontal center-justified no-wrap" [hidden]="hideSpinner">
+        <img [src]="pathToSpinner" style="width: 30px; height:30px; margin-top:15px;"/>
+        <h3>LOADING...</h3>
+    </div>
+    <div class="text-center" [hidden]="!hideSpinner"><h3>{{ currentSongId + 1 }} - {{ currentSong.name }}</h3></div>
+
+    <div class="layout horizontal center-justified">
+        <button (click)="changeSong('prev')" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>
+        <button (click)="play()" class="btn btn-default btn-lg"><span aria-hidden="true" [ngClass]="playPause"></span></button>
+        <button (click)="stop()" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
+        <button (click)="changeSong('next')" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>
+    </div>
+
+    <div class="horizonal-layout" draggable="false">
+        <div class="time" draggable="false">{{ currentMinute }}:{{ currentSecond | formatseconds }}</div>
+        <div>
+            <div id="timeline" #timeline (mousedown)="handleMouseDown($event)" (click)="handleMouseMoveOrClick($event)">
+                <div id="playhead" #playhead [ngStyle]="{'margin-left': playHeadPosition}"></div>
+            </div>
+        </div>
+        <div class="time" draggable="false">{{ minutes }}:{{ seconds | formatseconds }}</div>
+        <div (mouseenter)="handleMouseOverVolume()" [hidden]="!hideVolume">
+            <button id="volume-button" class="btn btn-default btn-lg"><span [ngClass]="volumeButton"></span></button>
+        </div>
+        <div (mouseleave)="hideVolume = true" [hidden]="hideVolume">
+            <button id="volume-button-2" class="btn btn-default btn-lg" (click)="muteUnmute()"><span [ngClass]="volumeButton"></span></button>
+            <input #volume type="range" min="0" max="100" step="1"  value="100" (change)="handleVolume(volume.value)" class="volume" orient="vertical" [ngStyle]="{'top':volumeBottom, 'left':volumeLeft}"/>
+        </div>
+    </div>
+
+</div>
+
+<audio #player (ended)="changeSong('next')" (timeupdate)="timeUpdate()" (canplaythrough)="setDuration()" preload (canplay)="stopSpinner()" mouse>
+    <source [src]="currentSongPath" type="audio/ogg">
+    <source [src]="currentSongPath" type="audio/mpeg">
+</audio>
+

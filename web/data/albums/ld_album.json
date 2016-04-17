@@ -1,0 +1,10 @@
+{ "title" : "Livin Dead the Musical",
+  "artist" : "AC/DC",
+  "songs" :
+  [
+    {
+      "name": "Back in Black",
+      "url": "back_in_black.ogg"
+    }
+  ]
+}
