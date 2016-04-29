@@ -1,6 +1,10 @@
-<a href="http://www.folkprophet.com"><img *ngIf="siteService?.sectionData.fp" [hidden]="fpImageIsBlack" class="fpLink" [src]="fpImageWhite"/>
-<img *ngIf="siteService?.sectionData.fp" [hidden]="!fpImageIsBlack" class="fpLink" [src]="fpImageBlack"/></a>
-<img *ngIf="siteService?.sectionData.sstc" class="sstcLink" [src]="sstcImage"/>
+<a href="http://www.folkprophet.com">
+    <img *ngIf="siteService?.sectionData.fp" [hidden]="fpImageIsBlack" class="fpLink" [src]="fpImageWhite"/>
+    <img *ngIf="siteService?.sectionData.fp" [hidden]="!fpImageIsBlack" class="fpLink" [src]="fpImageBlack"/>
+</a>
+<a href="http://sstheatreco.blogspot.com">
+    <img *ngIf="siteService?.sectionData.sstc" class="sstcLink" [src]="sstcImage"/>
+</a>
 <ul id="menu"
     style="list-style: none; padding: 0; margin: 0;"
     [ngClass]="menuClass"
